@@ -23,13 +23,6 @@ import uuid
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("langsmith")
 
-# Vérification de sentencepiece au démarrage
-try:
-    import sentencepiece
-except ImportError:
-    st.error("La bibliothèque 'sentencepiece' est requise pour la traduction. Installez-la avec `pip install sentencepiece` et redémarrez l'application.")
-    st.stop()
-
 # Load environment variables
 load_dotenv()
 
@@ -676,7 +669,7 @@ def main():
                 ✨ Multi-IA : Génération · Voix · Traduction ✨
             </h1>
             <p style="color: white; font-size: 1.2rem; opacity: 0.9;">
-                Bienvenue dans un univers intelligent où le texte prend vie ! 🧠🔊🌍
+                Bienvenue dans un univers intelligent où le texte prend vie ! 🧠🔍💬
             </p>
         </div>
         """,
@@ -761,7 +754,7 @@ def main():
                 texte = generate_text_with_groq(prompt, length, temperature)
             if texte:
                 st.markdown(f"""
-                    <div class='fade-in-card' style='background: linear-gradient(120deg, #fafdff 60%, #fbc2eb 100); border-radius: 28px; box-shadow: 0 4px 24px #a18cd122; padding: 2rem 1.5rem; margin-top:1.5em; max-width:767px; margin-left:auto; margin-right:;'>
+                    <div class='fade-in'> style='background: linear-gradient(120deg, #fafdff 60%, #fbc2eb 100); border-radius: 28px; box-shadow: 0 4px 24px #a18cd122; padding: 2rem 1.5rem; margin-top:1.5em; max-width:767px; margin-left:auto; margin-right:;'>
                         <span class='ia-badge'>🤖 Réponse IA</span>
                         <div style='font-size:1.18em; color:#222; margin: 1em 0 0.5em 0;'>{texte}</div>
                         <button class='copy-btn' onclick="navigator.clipboard.writeText(`{texte}`)">Copier</button>
@@ -802,18 +795,11 @@ def main():
                             
                             audio = text_to_speech(text_input, model, tokenizer)
                             
-                            if audio:
-                                for i, word in enumerate(words):
-                                    displayed_text += word + " "
-                                    text_placeholder.markdown(
-                                        f"<div class='generated-text'>{displayed_text}</div>", 
-                                        unsafe_allow_html=True
-                                    )
-                                    
-                                    if i == len(words) // 4:
-                                        audio_placeholder.audio(audio, format="audio/wav")
-                                    
-                                    time.sleep(0.1)
+                            st.markdown(
+                                f"<div class='generated-text'>{text_input}</div>", 
+                                unsafe_allow_html=True
+                            )
+                            st.audio(audio, format="audio/wav")
                             else:
                                 st.error("Erreur dans la synthèse vocale.")
                         else:
@@ -875,7 +861,7 @@ def main():
 
     elif selected == "À propos":
         st.markdown("""
-            <div style='background: linear-gradient(120deg, #4b79a1 0%, #283e51 100%); padding: 2rem; border-radius: 18px; color: white; margin-bottom: 2rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);'>
+            <div style='background: linear-gradient(120deg, #4b79a1 0%, #283e51 100%); padding: 2rem; border-radius: 18px; color: white; margin-bottom: 2rem; text-align: center;'>
                 <h1 class='section-title' style='color:white;'>À propos</h1>
                 <p>Découvrez le créateur, le projet et les technologies utilisées</p>
             </div>
