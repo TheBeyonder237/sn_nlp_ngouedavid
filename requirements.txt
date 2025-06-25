@@ -9,4 +9,3 @@ streamlit-lottie
 requests
 streamlit-option-menu
 numpy
-sentencepiece==0.1.99

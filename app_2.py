@@ -800,19 +800,19 @@ def main():
                                 unsafe_allow_html=True
                             )
                             st.audio(audio, format="audio/wav")
-                            else:
-                                st.error("Erreur dans la synthèse vocale.")
                         else:
-                            audio = text_to_speech(text_input, model, tokenizer)
-                            if audio:
-                                st.markdown(
-                                    f"<div class='generated-text'>{text_input}</div>", 
-                                    unsafe_allow_html=True
-                                )
-                                st.audio(audio, format="audio/wav")
-                            else:
-                                st.error("Erreur dans la synthèse vocale.")
+                            st.error("Erreur dans la synthèse vocale.")
                     else:
+                        audio = text_to_speech(text_input, model, tokenizer)
+                        if audio:
+                            st.markdown(
+                                f"<div class='generated-text'>{text_input}</div>", 
+                                unsafe_allow_html=True
+                            )
+                            st.audio(audio, format="audio/wav")
+                        else:
+                                st.error("Erreur dans la synthèse vocale.")
+            else:
                         st.error("Modèle TTS non chargé correctement.")
 
     elif selected == "Traduction":
