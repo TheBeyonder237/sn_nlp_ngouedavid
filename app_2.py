@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM, VitsModel, M2M100ForConditionalGeneration, M2M100Tokenizer
+from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM, VitsModel
 import torch
 import tempfile
 import soundfile as sf
@@ -7,6 +7,7 @@ import time
 from groq import Groq
 from langsmith import Client
 from langsmith.run_helpers import traceable
+from langsmith.run_trees import RunTree
 import os
 from dotenv import load_dotenv
 import json
@@ -454,25 +455,13 @@ def load_tts_model(language_code="eng"):
         return None, None
 
 @st.cache_resource
-def load_translation_model():
-    try:
-        model = M2M100ForConditionalGeneration.from_pretrained("facebook/m2m100_418M")
-        tokenizer = M2M100Tokenizer.from_pretrained("facebook/m2m100_418M")
-        logger.info("Translation model M2M100 loaded successfully")
-        return model, tokenizer
-    except Exception as e:
-        logger.error(f"Failed to load translation model: {str(e)}")
-        return None, None
-
-@st.cache_resource
 def load_models():
     gen = pipeline("text-generation", model="gpt2")
     tts_model, tts_tokenizer = load_tts_model()
-    translation_model, translation_tokenizer = load_translation_model()
-    logger.info("Text generation, TTS, and translation models loaded")
-    return gen, tts_model, tts_tokenizer, translation_model, translation_tokenizer
+    logger.info("Text generation and TTS models loaded")
+    return gen, tts_model, tts_tokenizer
 
-text_gen, tts_model, tts_tokenizer, translation_model, translation_tokenizer = load_models()
+text_gen, tts_model, tts_tokenizer = load_models()
 
 # Initialize global clients
 groq_client = None
@@ -520,31 +509,41 @@ def generate_text_with_groq(prompt, length, temperature=1.0):
         st.error(f"Erreur Groq : {str(e)}")
         return None
 
-@traceable(run_type="chain", name="translation", tags=["translation", "m2m100"])
+SUPPORTED_LANGUAGE_PAIRS = {
+    ("en", "fr"), ("fr", "en"), ("en", "es"), ("es", "en"),
+    ("de", "en"), ("en", "de"), ("it", "en"), ("en", "it"),
+    ("nl", "en"), ("en", "nl"), ("pt", "en"), ("en", "pt")
+}
+
+@traceable(run_type="chain", name="translation", tags=["translation", "helsinki-nlp"])
 def translate(text, src_lang, tgt_lang):
-    global langsmith_client, translation_model, translation_tokenizer
+    global langsmith_client
     if not langsmith_client:
         logger.error("LangSmith client not initialized")
         st.error("Le client LangSmith n'est pas initialisé. Veuillez configurer vos clés API.")
         return None
     
-    if not translation_model or not translation_tokenizer:
-        logger.error("Translation model or tokenizer not initialized")
-        st.error("Modèle de traduction non chargé correctement.")
+    if (src_lang, tgt_lang) not in SUPPORTED_LANGUAGE_PAIRS:
+        logger.error(f"Unsupported language pair: {src_lang} -> {tgt_lang}")
+        st.error(f"La paire de langues {src_lang} -> {tgt_lang} n'est pas supportée.")
+        return None
+    
+    try:
+        import sentencepiece
+    except ImportError:
+        logger.error("sentencepiece is not installed")
+        st.error("La bibliothèque 'sentencepiece' est requise pour la traduction. Installez-la avec `pip install sentencepiece`.")
         return None
 
     try:
-        translation_tokenizer.src_lang = src_lang
-        inputs = translation_tokenizer(text, return_tensors="pt", padding=True)
-        translated_tokens = translation_model.generate(
-            **inputs, forced_bos_token_id=translation_tokenizer.get_lang_id(tgt_lang)
-        )
-        result = translation_tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
+        model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
+        translator = pipeline("translation", model=model_name)
+        result = translator(text)[0]["translation_text"]
         logger.info(f"Translation completed: {src_lang} -> {tgt_lang}")
         return result
     except Exception as e:
         logger.error(f"Translation error: {str(e)}")
-        st.error(f"Erreur de traduction : {str(e)}")
+        st.error(f"Erreur de traduction : {str(e)}. Vérifiez que le modèle {model_name} est disponible.")
         return None
 
 @traceable(run_type="chain", name="text_to_speech", tags=["tts", "mms-tts"])
@@ -699,7 +698,7 @@ def main():
                 <h3 style='color:#7dd3fc; font-size:1.2em;'>🔬 Technologies</h3>
                 <span class='badge'>Groq</span>
                 <span class='badge'>Meta MMS-TTS</span>
-                <span class='badge'>M2M100</span>
+                <span class='badge'>Helsinki-NLP</span>
                 <span class='badge'>LangSmith</span>
                 <span class='badge'>Streamlit</span>
                 <span class='badge'>Python</span>
@@ -718,6 +717,7 @@ def main():
         st.markdown("""
             <div style='background: rgba(30, 41, 59, 0.75); border-radius: 38px; box-shadow: 0 12px 48px 0 rgba(71, 85, 105, 0.3), 0 2px 12px rgba(100, 116, 139, 0.3); padding: 2.8rem 2.2rem 2.2rem 2.2rem; margin-bottom: 2.5rem; position: relative; max-width: 900px; margin-left:auto; margin-right:auto;'>
                 <div style='display:flex; align-items:center; justify-content:center; margin-bottom:1.2em;'>
+                    <img src="https://lottie.host/6e7e2e7b-6e7e-4e7e-8e7e-6e7e2e7b6e7e/ai.json" alt="AI" style="height:48px; margin-right:16px;"/>
                     <h1 style='font-size:2.3em; color:#7dd3fc; font-weight:800; letter-spacing:1px; margin:0;'>Générateur de texte IA</h1>
                 </div>
                 <span class='badge'>Groq · Génération</span>
@@ -827,6 +827,8 @@ def main():
             
             if langues[src] == langues[tgt]:
                 st.error("La langue source et la langue cible doivent être différentes.")
+            elif (langues[src], langues[tgt]) not in SUPPORTED_LANGUAGE_PAIRS:
+                st.warning(f"La paire de langues {src} -> {tgt} n'est pas supportée.")
             else:
                 texte_input = st.text_area("Texte à traduire :", 
                                         placeholder="Exemple : Wie schön ist das Wetter heute ?")
