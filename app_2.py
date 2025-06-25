@@ -51,7 +51,6 @@ def validate_api_key(groq_api_key):
     """Validate Groq API key by attempting to initialize client."""
     try:
         groq_client = Groq(api_key=groq_api_key)
-        # Test a simple request to validate Groq API key
         groq_client.chat.completions.create(
             messages=[{"role": "user", "content": "Test"}],
             model="llama-3.3-70b-versatile",
@@ -83,125 +82,125 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ---------- MODERN CSS (Pastel/Glassmorphism Palette) ----------
+# ---------- MODERN CSS (Darker Palette) ----------
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
     * { font-family: 'Quicksand', 'Poppins', sans-serif; }
     body, .main {
-        background: linear-gradient(135deg, #fafdff 0%, #dbeafe 60%, #e0e7ff 100%) !important;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 60%, #475569 100%) !important;
         min-height: 100vh;
     }
     .stApp {
-        background: linear-gradient(135deg, #fafdff 0%, #dbeafe 60%, #e0e7ff 100%) !important;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 60%, #475569 100%) !important;
     }
     .section-card, .visual-card, .metric-card {
-        background: rgba(255,255,255,0.92);
+        background: rgba(30, 41, 59, 0.92);
         border-radius: 32px;
-        box-shadow: 0 8px 40px 0 #c7d2fe33, 0 1.5px 8px #e0e7ff33;
+        box-shadow: 0 8px 40px 0 rgba(71, 85, 105, 0.2), 0 1.5px 8px rgba(100, 116, 139, 0.2);
         padding: 2.2rem 2rem;
         margin-bottom: 2rem;
         transition: box-shadow 0.3s, transform 0.2s;
         backdrop-filter: blur(8px);
     }
     .section-card:hover, .visual-card:hover, .metric-card:hover {
-        box-shadow: 0 16px 48px 0 #c7d2fe44, 0 2px 12px #e0e7ff55;
+        box-shadow: 0 16px 48px 0 rgba(71, 85, 105, 0.3), 0 2px 12px rgba(100, 116, 139, 0.3);
         transform: translateY(-2px) scale(1.01);
     }
     .section-title, .section-title-visual {
-        color: #6366f1;
+        color: #7dd3fc;
         font-size: 2.3em;
         font-weight: 700;
         margin-bottom: 0.5em;
-        text-shadow: 1px 1px 8px #e0e7ff44;
+        text-shadow: 1px 1px 8px rgba(71, 85, 105, 0.3);
         letter-spacing: 1px;
     }
     .badge, .ia-badge {
         display: inline-block;
-        background: linear-gradient(90deg, #c7d2fe 0%, #e0e7ff 100%);
-        color: #6366f1;
+        background: linear-gradient(90deg, #475569 0%, #64748b 100%);
+        color: #7dd3fc;
         border-radius: 16px;
         padding: 0.4em 1.2em;
         font-size: 1.05em;
         font-weight: 700;
         margin: 0.2em 0.3em;
-        box-shadow: 0 2px 8px #c7d2fe22;
+        box-shadow: 0 2px 8px rgba(71, 85, 105, 0.2);
         letter-spacing: 1px;
     }
     .stButton>button, .glow-btn {
-        background: linear-gradient(90deg, #c7d2fe 0%, #e0e7ff 100%);
-        color: #6366f1;
+        background: linear-gradient(90deg, #475569 0%, #64748b 100%);
+        color: #7dd3fc;
         border-radius: 32px;
         padding: 1em 2.5em;
         font-size: 1.18em;
         font-weight: 700;
-        box-shadow: 0 4px 24px #c7d2fe33, 0 1.5px 8px #e0e7ff33;
+        box-shadow: 0 4px 24px rgba(71, 85, 105, 0.2), 0 1.5px 8px rgba(100, 116, 139, 0.2);
         margin-top: 0.5em;
         margin-bottom: 1.2em;
         transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
         cursor: pointer;
     }
     .stButton>button:hover, .glow-btn:hover {
-        box-shadow: 0 8px 32px #c7d2fe55, 0 2px 12px #e0e7ff55;
-        background: linear-gradient(90deg, #e0e7ff 0%, #c7d2fe 100%);
-        color: #3730a3;
+        box-shadow: 0 8px 32px rgba(71, 85, 105, 0.3), 0 2px 12px rgba(100, 116, 139, 0.3);
+        background: linear-gradient(90deg, #64748b 0%, #475569 100%);
+        color: #e0f0ff;
         transform: translateY(-2px) scale(1.04);
     }
     .about-avatar {
         border-radius: 50%;
-        border: 4px solid #c7d2fe;
-        box-shadow: 0 4px 16px #c7d2fe33;
+        border: 4px solid #475569;
+        box-shadow: 0 4px 16px rgba(71, 85, 105, 0.2);
         margin-bottom: 1em;
     }
     .about-contact-btn {
-        background: linear-gradient(90deg, #c7d2fe 0%, #e0e7ff 100%);
-        color: #6366f1;
+        background: linear-gradient(90deg, #475569 0%, #64748b 100%);
+        color: #7dd3fc;
         border-radius: 22px;
         padding: 0.6em 1.7em;
         border: none;
         font-weight: 700;
         margin: 0.5em 0.5em 0.5em 0;
         font-size: 1.13em;
-        box-shadow: 0 2px 8px #c7d2fe22;
+        box-shadow: 0 2px 8px rgba(71, 85, 105, 0.2);
         transition: background 0.2s, color 0.2s;
     }
     .about-contact-btn:hover {
-        background: linear-gradient(90deg, #e0e7ff 0%, #c7d2fe 100%);
-        color: #3730a3;
+        background: linear-gradient(90deg, #64748b 0%, #475569 100%);
+        color: #e0f0ff;
     }
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {
         background: transparent !important;
-        color: #3730a3 !important;
+        color: #e0f0ff !important;
     }
     .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px #c7d2fe33;
+        border-color: #7dd3fc;
+        box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.2);
     }
     .stSelectbox > div > div {
         background: transparent !important;
-        color: #3730a3 !important;
+        color: #e0f0ff !important;
     }
     .stSelectbox label {
-        color: #6366f1 !important;
+        color: #7dd3fc !important;
     }
     .stSelectbox div[role="option"] {
-        color: #3730a3 !important;
-        background: #f3f4f6 !important;
+        color: #e0f0ff !important;
+        background: #334155 !important;
     }
     .stSelectbox span {
-        color: #3730a3 !important;
+        color: #e0f0ff !important;
     }
     .sidebar .sidebar-content {
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-        box-shadow: 2px 0 18px #c7d2fe22;
+        background: linear-gradient(135deg, #334155 0%, #475569 100%);
+        box-shadow: 2px 0 18px rgba(71, 85, 105, 0.2);
         border-radius: 22px;
         backdrop-filter: blur(6px);
     }
-    .stProgress > div > div { background-color: #c7d2fe; }
+    .stProgress > div > div { background-color: #475569; }
     .stAlert { border-radius: 14px; }
     .section-sep {
         border: none;
-        border-top: 2px solid #e0e7ff;
+        border-top: 2px solid #64748b;
         margin: 2.5em 0 2em 0;
         width: 80%;
     }
@@ -218,27 +217,27 @@ st.markdown("""
         }
     }
     .css-1d391kg, .css-1d391kg .sidebar-content {
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+        background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
         border-radius: 22px !important;
-        box-shadow: 0 4px 24px #c7d2fe22 !important;
+        box-shadow: 0 4px 24px rgba(71, 85, 105, 0.2) !important;
     }
     .stSelectbox [data-baseweb="select"] {
-        color: #3730a3 !important;
-        background: #fafdff !important;
+        color: #e0f0ff !important;
+        background: #1e293b !important;
     }
     .stSelectbox [data-baseweb="select"] * {
-        color: #3730a3 !important;
-        background: #fafdff !important;
+        color: #e0f0ff !important;
+        background: #1e293b !important;
     }
     .stSelectbox [data-baseweb="select"] div[role="option"] {
-        color: #3730a3 !important;
-        background: #f3f4f6 !important;
+        color: #e0f0ff !important;
+        background: #334155 !important;
     }
     .stSelectbox [data-baseweb="select"] span {
-        color: #3730a3 !important;
+        color: #e0f0ff !important;
     }
     .stSelectbox label {
-        color: #6366f1 !important;
+        color: #7dd3fc !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -255,26 +254,26 @@ with st.sidebar:
         styles={
             "container": {
                 "padding": "0!important",
-                "background": "linear-gradient(135deg, #fafdff 0%, #dbeafe 60%, #e0e7ff 100%)",
-                "box-shadow": "0 4px 24px #c7d2fe22",
+                "background": "linear-gradient(135deg, #1e293b 0%, #334155 60%, #475569 100%)",
+                "box-shadow": "0 4px 24px rgba(71, 85, 105, 0.2)",
                 "border-radius": "22px"
             },
-            "icon": {"color": "#6366f1", "font-size": "22px"},
+            "icon": {"color": "#7dd3fc", "font-size": "22px"},
             "nav-link": {
                 "font-size": "17px",
                 "text-align": "left",
                 "margin": "0px",
                 "padding": "12px 18px",
-                "color": "#6366f1",
+                "color": "#7dd3fc",
                 "background": "transparent",
                 "border-radius": "14px",
                 "transition": "background 0.2s, color 0.2s",
-                "--hover-color": "#e0e7ff",
+                "--hover-color": "#64748b",
             },
             "nav-link-selected": {
-                "background": "linear-gradient(90deg, #e0e7ff 0%, #c7d2fe 100%)",
-                "color": "#6366f1",
-                "box-shadow": "0 2px 12px #c7d2fe44",
+                "background": "linear-gradient(90deg, #64748b 0%, #475569 100%)",
+                "color": "#7dd3fc",
+                "box-shadow": "0 2px 12px rgba(71, 85, 105, 0.3)",
             },
         }
     )
@@ -310,38 +309,39 @@ def show_api_key_setup():
             max-width: 800px;
             margin: 2rem auto;
             padding: 2rem;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(30, 41, 59, 0.95);
             border-radius: 1.5rem;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(71, 85, 105, 0.2);
             backdrop-filter: blur(10px);
             animation: fadeInUp 0.8s ease;
         }
         .api-setup h1 {
-            color: #1f3c88;
+            color: #7dd3fc;
             text-align: center;
             margin-bottom: 1.5rem;
         }
         .api-setup p {
-            color: #4a5568;
+            color: #e0f0ff;
             text-align: center;
             margin-bottom: 2rem;
         }
         .api-input {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
+            background: #1e293b;
+            border: 2px solid #475569;
             border-radius: 0.75rem;
             padding: 0.75rem;
             width: 100%;
             margin-bottom: 1rem;
             transition: all 0.3s ease;
+            color: #e0f0ff;
         }
         .api-input:focus {
-            border-color: #4facfe;
-            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+            border-color: #7dd3fc;
+            box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.2);
         }
         .api-button {
-            background: linear-gradient(to right, #4facfe, #00f2fe);
-            color: white;
+            background: linear-gradient(to right, #475569, #64748b);
+            color: #e0f0ff;
             border: none;
             padding: 0.75rem 1.5rem;
             border-radius: 0.75rem;
@@ -352,24 +352,24 @@ def show_api_key_setup():
         }
         .api-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(71, 85, 105, 0.3);
         }
         .api-info {
-            background: #ebf8ff;
+            background: #334155;
             border-radius: 0.75rem;
             padding: 1rem;
             margin-top: 1.5rem;
             font-size: 0.9rem;
-            color: #2b6cb0;
+            color: #7dd3fc;
         }
         .api-section {
-            background: #f8fafc;
+            background: #1e293b;
             border-radius: 1rem;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
         .api-section h3 {
-            color: #2c5282;
+            color: #7dd3fc;
             margin-bottom: 1rem;
         }
     </style>
@@ -382,7 +382,6 @@ def show_api_key_setup():
     </div>
     """, unsafe_allow_html=True)
 
-    # Groq API Section
     st.markdown("""
     <div class="api-section">
         <h3>🤖 API Groq</h3>
@@ -395,7 +394,6 @@ def show_api_key_setup():
         help="Entrez votre clé API Groq pour activer la génération de texte avancée. Obtenez-la sur https://console.groq.com."
     )
 
-    # LangSmith API Section (préremplie)
     st.markdown("""
     <div class="api-section">
         <h3>📊 API LangSmith</h3>
@@ -410,14 +408,12 @@ def show_api_key_setup():
         help="Clé API LangSmith pour le monitoring. La clé par défaut est préremplie."
     )
 
-    # Tracing toggle
     tracing_enabled = st.checkbox("Activer le traçage LangSmith", value=True)
 
     col1, col2 = st.columns([1, 2])
     with col1:
         if st.button("💾 Sauvegarder", use_container_width=True):
             if groq_api_key:
-                # Valider la clé Groq avant de sauvegarder
                 is_valid, message = validate_api_key(groq_api_key)
                 if is_valid:
                     save_api_key(groq_api_key, langsmith_api_key, tracing_enabled)
@@ -513,7 +509,6 @@ def generate_text_with_groq(prompt, length, temperature=1.0):
         st.error(f"Erreur Groq : {str(e)}")
         return None
 
-# Liste des paires de langues supportées
 SUPPORTED_LANGUAGE_PAIRS = {
     ("en", "fr"), ("fr", "en"), ("en", "es"), ("es", "en"),
     ("de", "en"), ("en", "de"), ("it", "en"), ("en", "it"),
@@ -597,22 +592,22 @@ def display_langsmith_badge(tracing_enabled):
             width: 16px;
             height: 16px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            background: linear-gradient(135deg, #7dd3fc, #e0f0ff);
             margin-right: 10px;
-            box-shadow: 0 0 10px #00f2fe, 0 0 20px #4facfe;
+            box-shadow: 0 0 10px #e0f0ff, 0 0 20px #7dd3fc;
             animation: pulse 1.5s infinite;
         }}
         .ls-text {{
             font-weight: bold;
-            color: #1f3c88;
+            color: #e0f0ff;
             font-size: 1.1rem;
             letter-spacing: 1px;
-            text-shadow: 0 2px 8px #e0f7fa;
+            text-shadow: 0 2px 8px rgba(71, 85, 105, 0.3);
         }}
         @keyframes pulse {{
-            0% {{ box-shadow: 0 0 10px #00f2fe, 0 0 20px #4facfe; }}
-            50% {{ box-shadow: 0 0 20px #00f2fe, 0 0 40px #4facfe; }}
-            100% {{ box-shadow: 0 0 10px #00f2fe, 0 0 20px #4facfe; }}
+            0% {{ box-shadow: 0 0 10px #e0f0ff, 0 0 20px #7dd3fc; }}
+            50% {{ box-shadow: 0 0 20px #e0f0ff, 0 0 40px #7dd3fc; }}
+            100% {{ box-shadow: 0 0 10px #e0f0ff, 0 0 20px #7dd3fc; }}
         }}
         @keyframes fadeIn {{
             from {{ opacity: 0; }}
@@ -630,16 +625,13 @@ def display_langsmith_badge(tracing_enabled):
 def main():
     global groq_client, langsmith_client
     
-    # Load API keys and tracing setting
     groq_api_key, langsmith_api_key, tracing_enabled = load_api_key()
     
-    # Vérifier si la clé API Groq est présente et valide
     if not groq_api_key:
         st.warning("Une clé API Groq est requise pour utiliser l'application.")
         show_api_key_setup()
         return
     
-    # Valider la clé Groq
     is_valid, message = validate_api_key(groq_api_key)
     if not is_valid:
         st.error(message)
@@ -648,27 +640,23 @@ def main():
     
     configure_langsmith(tracing_enabled, langsmith_api_key)
     
-    # Display LangSmith status badge
     display_langsmith_badge(tracing_enabled)
 
-    # Initialize clients with the saved API keys
     if not initialize_clients(groq_api_key, langsmith_api_key):
         st.error("Impossible d'initialiser les clients API. Veuillez vérifier votre clé API Groq.")
         return
 
-    # Set up LangChain environment
     os.environ["LANGCHAIN_API_KEY"] = langsmith_api_key
     os.environ["LANGCHAIN_PROJECT"] = "multi-ia-app"
     os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 
-    # ---------- Main Interface ----------
     st.markdown(
         """
         <div style="text-align: center; margin-bottom: 2rem;">
-            <h1 class="title-animation" style="color: white; font-size: 3rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+            <h1 class="title-animation" style="color: #e0f0ff; font-size: 3rem; text-shadow: 2px 2px 4px rgba(71, 85, 105, 0.3);">
                 ✨ Multi-IA : Génération · Voix · Traduction ✨
             </h1>
-            <p style="color: white; font-size: 1.2rem; opacity: 0.9;">
+            <p style="color: #e0f0ff; font-size: 1.2rem; opacity: 0.9;">
                 Bienvenue dans un univers intelligent où le texte prend vie ! 🧠🔍💬
             </p>
         </div>
@@ -676,25 +664,24 @@ def main():
         unsafe_allow_html=True
     )
 
-    # ---------- Dynamic Content ----------
     if selected == "Accueil":
         st.markdown("""
             <div style='
                 text-align: center; 
                 padding: 2.5rem 1rem 2rem 1rem; 
-                background: linear-gradient(135deg, #f8fafc 0%, #e4e8eb 100%);
+                background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
                 border-radius: 22px; 
                 margin-bottom: 36px;
-                box-shadow: 0 6px 32px 0 rgba(76, 110, 245, 0.08);
+                box-shadow: 0 6px 32px 0 rgba(71, 85, 105, 0.2);
             '>
                 <h1 class='section-title' style='font-size:2.8em; margin-bottom:0.2em;'>✨ Multi-IA : Génération · Voix · Traduction ✨</h1>
-                <p style='color: #2c3e50; font-size: 1.35em; font-weight: 400; margin-bottom:0.8em;'>
+                <p style='color: #e0f0ff; font-size: 1.35em; font-weight: 400; margin-bottom:0.8em;'>
                     <i>Bienvenue dans un univers intelligent où le texte prend vie ! 🧠🔊🌍</i>
                 </p>
-                <hr style='border: none; border-top: 1.5px solid #e4e8eb; width: 60%; margin: 1.5em auto 1.5em auto;'/>
-                <p style='color: #4b79a1; font-size: 1.1em; max-width: 700px; margin: auto;'>
+                <hr style='border: none; border-top: 1.5px solid #475569; width: 60%; margin: 1.5em auto 1.5em auto;'/>
+                <p style='color: #7dd3fc; font-size: 1.1em; max-width: 700px; margin: auto;'>
                     Cette application met la puissance du machine learning et du NLP au service de la créativité et de la productivité : <b>génère, vocalise, traduis</b> en quelques clics.<br>
-                    <span style='color:#283e51;'>Pensée pour les passionnés d'IA, accessible à tous.</span>
+                    <span style='color:#e0f0ff;'>Pensée pour les passionnés d'IA, accessible à tous.</span>
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -702,13 +689,13 @@ def main():
         with col1:
             st.markdown("""
             <div class='section-card' style='margin-bottom:1.5em;'>
-                <h3 style='color:#4b79a1; font-size:1.3em;'>🎯 Mission</h3>
-                <p style='font-size:1.08em;'>
+                <h3 style='color:#7dd3fc; font-size:1.3em;'>🎯 Mission</h3>
+                <p style='font-size:1.08em; color:#e0f0ff;'>
                     Offrir une plateforme IA tout-en-un pour explorer la génération de texte, la synthèse vocale et la traduction automatique, avec une expérience utilisateur moderne et agréable.
                 </p>
             </div>
             <div class='section-card'>
-                <h3 style='color:#4b79a1; font-size:1.2em;'>🔬 Technologies</h3>
+                <h3 style='color:#7dd3fc; font-size:1.2em;'>🔬 Technologies</h3>
                 <span class='badge'>Groq</span>
                 <span class='badge'>Meta MMS-TTS</span>
                 <span class='badge'>Helsinki-NLP</span>
@@ -720,25 +707,25 @@ def main():
         with col2:
             st_lottie(main_animation, height=220, key="main_animation")
             st.markdown("""
-            <div style='margin-top: 18px; background: linear-gradient(135deg, #4b79a1 0%, #283e51 100%); color: white; padding: 18px; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(76,110,245,0.10);'>
-                <h2 style='margin:0;'>+1000</h2>
+            <div style='margin-top: 18px; background: linear-gradient(135deg, #475569 0%, #334155 100%); color: #e0f0ff; padding: 18px; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(71, 85, 105, 0.2);'>
+                <h2 style='margin:0; color:#7dd3fc;'>+1000</h2>
                 <p style='margin:0;'>Utilisateurs IA</p>
             </div>
             """, unsafe_allow_html=True)
 
     elif selected == "Génération de texte":
         st.markdown("""
-            <div style='background: rgba(255,255,255,0.75); border-radius: 38px; box-shadow: 0 12px 48px 0 #a18cd144, 0 2px 12px #fbc2eb55; padding: 2.8rem 2.2rem 2.2rem 2.2rem; margin-bottom: 2.5rem; position: relative; max-width: 900px; margin-left:auto; margin-right:auto;'>
+            <div style='background: rgba(30, 41, 59, 0.75); border-radius: 38px; box-shadow: 0 12px 48px 0 rgba(71, 85, 105, 0.3), 0 2px 12px rgba(100, 116, 139, 0.3); padding: 2.8rem 2.2rem 2.2rem 2.2rem; margin-bottom: 2.5rem; position: relative; max-width: 900px; margin-left:auto; margin-right:auto;'>
                 <div style='display:flex; align-items:center; justify-content:center; margin-bottom:1.2em;'>
                     <img src="https://lottie.host/6e7e2e7b-6e7e-4e7e-8e7e-6e7e2e7b6e7e/ai.json" alt="AI" style="height:48px; margin-right:16px;"/>
-                    <h1 style='font-size:2.3em; color:#a18cd1; font-weight:800; letter-spacing:1px; margin:0;'>Générateur de texte IA</h1>
+                    <h1 style='font-size:2.3em; color:#7dd3fc; font-weight:800; letter-spacing:1px; margin:0;'>Générateur de texte IA</h1>
                 </div>
                 <span class='badge'>Groq · Génération</span>
                 <hr class='section-sep' style='margin:1.2em 0 2em 0;'/>
             </div>
             <style>
-            .modern-input {background:rgba(255,255,255,0.92); border:2px solid #a18cd1; border-radius:20px; padding:0.85rem; font-size:1.08em; transition:all 0.3s;}
-            .modern-input:focus {border-color:#fbc2eb; box-shadow:0 0 0 3px #a18cd133;}
+            .modern-input {background:rgba(30, 41, 59, 0.92); border:2px solid #475569; border-radius:20px; padding:0.85rem; font-size:1.08em; transition:all 0.3s; color:#e0f0ff;}
+            .modern-input:focus {border-color:#7dd3fc; box-shadow:0 0 0 3px rgba(71, 85, 105, 0.2);}
             </style>
         """, unsafe_allow_html=True)
         col1, col2 = st.columns([2,1])
@@ -754,9 +741,9 @@ def main():
                 texte = generate_text_with_groq(prompt, length, temperature)
             if texte:
                 st.markdown(f"""
-                    <div class='fade-in'> style='background: linear-gradient(120deg, #fafdff 60%, #fbc2eb 100); border-radius: 28px; box-shadow: 0 4px 24px #a18cd122; padding: 2rem 1.5rem; margin-top:1.5em; max-width:767px; margin-left:auto; margin-right:;'>
+                    <div class='fade-in' style='background: linear-gradient(120deg, #1e293b 60%, #334155 100%); border-radius: 28px; box-shadow: 0 4px 24px rgba(71, 85, 105, 0.2); padding: 2rem 1.5rem; margin-top:1.5em; max-width:767px; margin-left:auto; margin-right:;'>
                         <span class='ia-badge'>🤖 Réponse IA</span>
-                        <div style='font-size:1.18em; color:#222; margin: 1em 0 0.5em 0;'>{texte}</div>
+                        <div style='font-size:1.18em; color:#e0f0ff; margin: 1em 0 0.5em 0;'>{texte}</div>
                         <button class='copy-btn' onclick="navigator.clipboard.writeText(`{texte}`)">Copier</button>
                     </div>
                 """, unsafe_allow_html=True)
@@ -796,23 +783,21 @@ def main():
                             audio = text_to_speech(text_input, model, tokenizer)
                             
                             st.markdown(
-                                f"<div class='generated-text'>{text_input}</div>", 
+                                f"<div class='generated-text' style='color:#e0f0ff;'>{text_input}</div>", 
                                 unsafe_allow_html=True
                             )
                             st.audio(audio, format="audio/wav")
                         else:
-                            st.error("Erreur dans la synthèse vocale.")
-                    else:
-                        audio = text_to_speech(text_input, model, tokenizer)
-                        if audio:
-                            st.markdown(
-                                f"<div class='generated-text'>{text_input}</div>", 
-                                unsafe_allow_html=True
-                            )
-                            st.audio(audio, format="audio/wav")
-                        else:
+                            audio = text_to_speech(text_input, model, tokenizer)
+                            if audio:
+                                st.markdown(
+                                    f"<div class='generated-text' style='color:#e0f0ff;'>{text_input}</div>", 
+                                    unsafe_allow_html=True
+                                )
+                                st.audio(audio, format="audio/wav")
+                            else:
                                 st.error("Erreur dans la synthèse vocale.")
-            else:
+                    else:
                         st.error("Modèle TTS non chargé correctement.")
 
     elif selected == "Traduction":
@@ -852,17 +837,17 @@ def main():
                     with st.spinner("Traduction en cours..."):
                         result = translate(texte_input, langues[src], langues[tgt])
                         if result:
-                            st.markdown(f"<div class='block'><p><strong>{src.capitalize()}</strong> : {texte_input}</p></div>", 
+                            st.markdown(f"<div class='block'><p><strong>{src.capitalize()}</strong> : <span style='color:#e0f0ff;'>{texte_input}</span></p></div>", 
                                     unsafe_allow_html=True)
-                            st.markdown(f"<div class='block'><p><strong>{tgt.capitalize()}</strong> : <span class='translated-text'>{result}</span></p></div>", 
+                            st.markdown(f"<div class='block'><p><strong>{tgt.capitalize()}</strong> : <span class='translated-text' style='color:#7dd3fc;'>{result}</span></p></div>", 
                                     unsafe_allow_html=True)
                         else:
                             st.error("Erreur lors de la traduction ou modèle non disponible.")
 
     elif selected == "À propos":
         st.markdown("""
-            <div style='background: linear-gradient(120deg, #4b79a1 0%, #283e51 100%); padding: 2rem; border-radius: 18px; color: white; margin-bottom: 2rem; text-align: center;'>
-                <h1 class='section-title' style='color:white;'>À propos</h1>
+            <div style='background: linear-gradient(120deg, #475569 0%, #334155 100%); padding: 2rem; border-radius: 18px; color: #e0f0ff; margin-bottom: 2rem; text-align: center;'>
+                <h1 class='section-title' style='color:#e0f0ff;'>À propos</h1>
                 <p>Découvrez le créateur, le projet et les technologies utilisées</p>
             </div>
         """, unsafe_allow_html=True)
@@ -887,11 +872,11 @@ def main():
             st.markdown("""
             <div class='section-card'>
                 <h2 class='section-title'>Qui suis-je ?</h2>
-                <p>
+                <p style='color:#e0f0ff;'>
                     Je suis un passionné de l'intelligence artificielle et de la donnée.<br>
                     Actuellement en Master 2 en IA et Big Data, je travaille sur des solutions innovantes dans le domaine de l'Intelligence Artificielle appliquée à la finance et à la santé.
                 </p>
-                <h3 style='color:#4b79a1;'>Compétences</h3>
+                <h3 style='color:#7dd3fc;'>Compétences</h3>
                 <span class='badge'>Python</span>
                 <span class='badge'>Machine Learning</span>
                 <span class='badge'>Deep Learning</span>
@@ -904,8 +889,8 @@ def main():
                 <span class='badge'>Pandas</span>
                 <span class='badge'>Plotly</span>
                 <span class='badge'>SQL</span>
-                <h3 style='color:#4b79a1; margin-top:1.5em;'>Projets récents</h3>
-                <ul>
+                <h3 style='color:#7dd3fc; margin-top:1.5em;'>Projets récents</h3>
+                <ul style='color:#e0f0ff;'>
                     <li><b>💳 Credit Card Expenditure Predictor</b> : Application de prédiction de dépenses de carte de crédit.</li>
                     <li><b>🫀 HeartGuard AI</b> : Prédiction de risques cardiaques par IA.</li>
                     <li><b>🔍 Multi-IA</b> : Plateforme multi-modèles pour la génération de texte, synthèse vocale et traduction.</li>
@@ -913,7 +898,7 @@ def main():
             </div>
             """, unsafe_allow_html=True)
         st.markdown("""
-            <div style='text-align: center; color: #666; padding: 20px;'>
+            <div style='text-align: center; color: #e0f0ff; padding: 20px;'>
             Développé avec ❤️ par Ngoue David
             </div>
         """, unsafe_allow_html=True)
@@ -922,16 +907,14 @@ def main():
         st.markdown("""
             <div class='section-card'>
                 <h1 class='section-title'>⚙️ Paramètres</h1>
-                <p>Configurez les options de l'application, y compris le traçage LangSmith.</p>
+                <p style='color:#e0f0ff;'>Configurez les options de l'application, y compris le traçage LangSmith.</p>
             </div>
         """, unsafe_allow_html=True)
         
-        # API Key settings
         st.markdown("### Configuration de la clé API Groq")
         if st.button("Modifier la clé API Groq"):
             show_api_key_setup()
         
-        # Tracing settings
         st.markdown("### Configuration du traçage")
         new_tracing_enabled = st.checkbox("Activer le traçage LangSmith", value=tracing_enabled)
         if new_tracing_enabled != tracing_enabled:
@@ -940,7 +923,6 @@ def main():
             st.success(f"Traçage LangSmith {'activé' if new_tracing_enabled else 'désactivé'}")
             st.rerun()
 
-        # Test tracing
         st.markdown("### Tester le traçage")
         test_input = st.text_input("Entrez un texte pour tester le traçage", key="test-tracing-input")
         if st.button("Tester"):
