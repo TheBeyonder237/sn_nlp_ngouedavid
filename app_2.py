@@ -23,14 +23,21 @@ import uuid
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("langsmith")
 
+# Vérification de sentencepiece au démarrage
+try:
+    import sentencepiece
+except ImportError:
+    st.error("La bibliothèque 'sentencepiece' est requise pour la traduction. Installez-la avec `pip install sentencepiece` et redémarrez l'application.")
+    st.stop()
+
 # Load environment variables
 load_dotenv()
 
 # ========== LangSmith Configuration ==========
-def configure_langsmith(tracing_enabled=True):
+def configure_langsmith(tracing_enabled=True, langsmith_api_key=None):
     """Configure LangSmith environment variables."""
     os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
-    os.environ["LANGSMITH_API_KEY"] = os.getenv("LANGSMITH_API_KEY", "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")
+    os.environ["LANGSMITH_API_KEY"] = langsmith_api_key or os.getenv("LANGSMITH_API_KEY", "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")
     os.environ["LANGSMITH_PROJECT"] = "multi-ia-app"
     os.environ["LANGSMITH_TRACING"] = "true" if tracing_enabled else "false"
     logger.info(f"LangSmith tracing {'enabled' if tracing_enabled else 'disabled'}")
@@ -45,6 +52,23 @@ def initialize_langsmith_client():
         logger.error(f"Failed to initialize LangSmith client: {str(e)}")
         st.error(f"Erreur lors de l'initialisation de LangSmith : {str(e)}")
         return None
+
+# Validate API key (only Groq)
+def validate_api_key(groq_api_key):
+    """Validate Groq API key by attempting to initialize client."""
+    try:
+        groq_client = Groq(api_key=groq_api_key)
+        # Test a simple request to validate Groq API key
+        groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": "Test"}],
+            model="llama-3.3-70b-versatile",
+            max_tokens=10
+        )
+        logger.info("Groq API key validated successfully")
+        return True, "Clé API Groq valide"
+    except Exception as e:
+        logger.error(f"Invalid Groq API key: {str(e)}")
+        return False, f"Clé API Groq invalide : {str(e)}"
 
 # --------- UTILS for Lottie ---------
 def load_lottieurl(url: str):
@@ -275,15 +299,15 @@ def save_api_key(groq_api_key, langsmith_api_key, tracing_enabled=True):
     }
     with open(config_file, "w") as f:
         json.dump(config, f)
-    configure_langsmith(tracing_enabled)
+    configure_langsmith(tracing_enabled, langsmith_api_key)
 
 def load_api_key():
     config_file = Path(".config/config.json")
     if config_file.exists():
         with open(config_file, "r") as f:
             config = json.load(f)
-            return config.get("groq_api_key"), config.get("langsmith_api_key"), config.get("tracing_enabled", True)
-    return None, None, True
+            return config.get("groq_api_key"), config.get("langsmith_api_key", "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"), config.get("tracing_enabled", True)
+    return None, "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", True
 
 # ---------- API Key Setup Interface ----------
 def show_api_key_setup():
@@ -360,8 +384,8 @@ def show_api_key_setup():
 
     st.markdown("""
     <div class="api-setup">
-        <h1>🔑 Configuration des API</h1>
-        <p>Pour utiliser toutes les fonctionnalités de Multi-IA, veuillez configurer vos clés API.</p>
+        <h1>🔑 Configuration de l'API Groq</h1>
+        <p>Pour utiliser toutes les fonctionnalités de Multi-IA, veuillez configurer votre clé API Groq.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -375,13 +399,14 @@ def show_api_key_setup():
     groq_api_key = st.text_input(
         "Clé API Groq",
         type="password",
-        help="Entrez votre clé API Groq pour activer la génération de texte avancée"
+        help="Entrez votre clé API Groq pour activer la génération de texte avancée. Obtenez-la sur https://console.groq.com."
     )
 
-    # LangSmith API Section
+    # LangSmith API Section (préremplie)
     st.markdown("""
     <div class="api-section">
         <h3>📊 API LangSmith</h3>
+        <p>La clé LangSmith par défaut est utilisée pour le monitoring. Vous pouvez la modifier si nécessaire.</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -389,7 +414,7 @@ def show_api_key_setup():
         "Clé API LangSmith",
         type="password",
         value="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",
-        help="Entrez votre clé API LangSmith pour activer le monitoring"
+        help="Clé API LangSmith pour le monitoring. La clé par défaut est préremplie."
     )
 
     # Tracing toggle
@@ -398,24 +423,28 @@ def show_api_key_setup():
     col1, col2 = st.columns([1, 2])
     with col1:
         if st.button("💾 Sauvegarder", use_container_width=True):
-            if groq_api_key and langsmith_api_key:
-                save_api_key(groq_api_key, langsmith_api_key, tracing_enabled)
-                st.success("Clés API sauvegardées avec succès ! Traçage " + ("activé" if tracing_enabled else "désactivé"))
-                st.rerun()
+            if groq_api_key:
+                # Valider la clé Groq avant de sauvegarder
+                is_valid, message = validate_api_key(groq_api_key)
+                if is_valid:
+                    save_api_key(groq_api_key, langsmith_api_key, tracing_enabled)
+                    st.success("Clé API Groq sauvegardée avec succès ! Traçage " + ("activé" if tracing_enabled else "désactivé"))
+                    st.rerun()
+                else:
+                    st.error(message)
             else:
-                st.error("Veuillez entrer toutes les clés API requises")
+                st.error("Veuillez entrer une clé API Groq")
     
     with col2:
         st.markdown("""
         <div class="api-info">
-            <p>🔍 Comment obtenir vos clés API :</p>
-            <h4>Groq API :</h4>
+            <p>🔍 Comment obtenir votre clé API Groq :</p>
             <ol>
                 <li>Créez un compte sur <a href="https://console.groq.com" target="_blank">console.groq.com</a></li>
                 <li>Accédez à la section "API Keys"</li>
                 <li>Générez une nouvelle clé API</li>
             </ol>
-            <h4>LangSmith API :</h4>
+            <p>🔍 La clé LangSmith par défaut est utilisée pour le monitoring. Pour une clé personnalisée :</p>
             <ol>
                 <li>Créez un compte sur <a href="https://smith.langchain.com" target="_blank">smith.langchain.com</a></li>
                 <li>Accédez à vos paramètres</li>
@@ -458,7 +487,7 @@ def initialize_clients(groq_api_key, langsmith_api_key):
         return True
     except Exception as e:
         logger.error(f"Failed to initialize clients: {str(e)}")
-        st.error(f"Erreur lors de l'initialisation des clients: {str(e)}")
+        st.error(f"Erreur lors de l'initialisation des clients : {str(e)}")
         return False
 
 # ---------- Test Tracing Function ----------
@@ -488,10 +517,10 @@ def generate_text_with_groq(prompt, length, temperature=1.0):
         return result
     except Exception as e:
         logger.error(f"Groq error: {str(e)}")
-        st.error(f"Erreur Groq: {str(e)}")
+        st.error(f"Erreur Groq : {str(e)}")
         return None
-    
-# Liste des paires de langues supportées (exemple partiel, à compléter selon vos besoins)
+
+# Liste des paires de langues supportées
 SUPPORTED_LANGUAGE_PAIRS = {
     ("en", "fr"), ("fr", "en"), ("en", "es"), ("es", "en"),
     ("de", "en"), ("en", "de"), ("it", "en"), ("en", "it"),
@@ -506,8 +535,13 @@ def translate(text, src_lang, tgt_lang):
         st.error("Le client LangSmith n'est pas initialisé. Veuillez configurer vos clés API.")
         return None
     
+    if (src_lang, tgt_lang) not in SUPPORTED_LANGUAGE_PAIRS:
+        logger.error(f"Unsupported language pair: {src_lang} -> {tgt_lang}")
+        st.error(f"La paire de langues {src_lang} -> {tgt_lang} n'est pas supportée.")
+        return None
+    
     try:
-        import sentencepiece  # Vérifier si sentencepiece est installé
+        import sentencepiece
     except ImportError:
         logger.error("sentencepiece is not installed")
         st.error("La bibliothèque 'sentencepiece' est requise pour la traduction. Installez-la avec `pip install sentencepiece`.")
@@ -534,6 +568,7 @@ def text_to_speech(text, model, tokenizer):
         
     if model is None or tokenizer is None:
         logger.error("TTS model or tokenizer is None")
+        st.error("Modèle TTS non chargé correctement.")
         return None
     try:
         inputs = tokenizer(text, return_tensors="pt")
@@ -548,7 +583,7 @@ def text_to_speech(text, model, tokenizer):
             return audio_file.read()
     except Exception as e:
         logger.error(f"TTS error: {str(e)}")
-        st.error(f"Erreur TTS: {str(e)}")
+        st.error(f"Erreur TTS : {str(e)}")
         return None
 
 # ========== Modern LangSmith Monitoring Badge ==========
@@ -604,19 +639,28 @@ def main():
     
     # Load API keys and tracing setting
     groq_api_key, langsmith_api_key, tracing_enabled = load_api_key()
-    configure_langsmith(tracing_enabled)
+    
+    # Vérifier si la clé API Groq est présente et valide
+    if not groq_api_key:
+        st.warning("Une clé API Groq est requise pour utiliser l'application.")
+        show_api_key_setup()
+        return
+    
+    # Valider la clé Groq
+    is_valid, message = validate_api_key(groq_api_key)
+    if not is_valid:
+        st.error(message)
+        show_api_key_setup()
+        return
+    
+    configure_langsmith(tracing_enabled, langsmith_api_key)
     
     # Display LangSmith status badge
     display_langsmith_badge(tracing_enabled)
 
-    # Check if API keys are configured
-    if not groq_api_key or not langsmith_api_key:
-        show_api_key_setup()
-        return
-
     # Initialize clients with the saved API keys
     if not initialize_clients(groq_api_key, langsmith_api_key):
-        st.error("Impossible d'initialiser les clients API. Veuillez vérifier vos clés API.")
+        st.error("Impossible d'initialiser les clients API. Veuillez vérifier votre clé API Groq.")
         return
 
     # Set up LangChain environment
@@ -713,13 +757,13 @@ def main():
         gen_btn = st.button("✨ Générer le texte", key="modern-gen-btn")
         if gen_btn:
             with st.spinner("Génération en cours..."):
-                st_lottie(loading_animation, height=80, key="loading-text-gen")
+                st_lottie(loading_animation, height=80, key="loading-textgen")
                 texte = generate_text_with_groq(prompt, length, temperature)
             if texte:
                 st.markdown(f"""
-                    <div class='fade-in-card' style='background: linear-gradient(120deg, #fafdff 60%, #fbc2eb 100%); border-radius: 28px; box-shadow: 0 4px 24px #a18cd122; padding: 2rem 1.5rem; margin-top:1.5em; max-width:700px; margin-left:auto; margin-right:auto;'>
+                    <div class='fade-in-card' style='background: linear-gradient(120deg, #fafdff 60%, #fbc2eb 100); border-radius: 28px; box-shadow: 0 4px 24px #a18cd122; padding: 2rem 1.5rem; margin-top:1.5em; max-width:767px; margin-left:auto; margin-right:;'>
                         <span class='ia-badge'>🤖 Réponse IA</span>
-                        <div style='font-size:1.18em; color:#222; margin:1em 0 0.5em 0;'>{texte}</div>
+                        <div style='font-size:1.18em; color:#222; margin: 1em 0 0.5em 0;'>{texte}</div>
                         <button class='copy-btn' onclick="navigator.clipboard.writeText(`{texte}`)">Copier</button>
                     </div>
                 """, unsafe_allow_html=True)
@@ -811,20 +855,20 @@ def main():
                 tgt = st.selectbox("Langue cible :", list(langues.keys()), index=1)
             
             if langues[src] == langues[tgt]:
-                st.warning("La langue source et la langue cible doivent être différentes.")
+                st.error("La langue source et la langue cible doivent être différentes.")
             elif (langues[src], langues[tgt]) not in SUPPORTED_LANGUAGE_PAIRS:
                 st.warning(f"La paire de langues {src} -> {tgt} n'est pas supportée.")
             else:
                 texte_input = st.text_area("Texte à traduire :", 
-                                        placeholder="Ex : Wie schön ist das Wetter heute?")
+                                        placeholder="Exemple : Wie schön ist das Wetter heute ?")
                 
                 if st.button("📤 Traduire"):
                     with st.spinner("Traduction en cours..."):
                         result = translate(texte_input, langues[src], langues[tgt])
                         if result:
-                            st.markdown(f"<div class='block'><p><strong>{src.capitalize()} :</strong> {texte_input}</p></div>", 
+                            st.markdown(f"<div class='block'><p><strong>{src.capitalize()}</strong> : {texte_input}</p></div>", 
                                     unsafe_allow_html=True)
-                            st.markdown(f"<div class='block'><p><strong>{tgt.capitalize()} :</strong> <span class='translated-text'>{result}</span></p></div>", 
+                            st.markdown(f"<div class='block'><p><strong>{tgt.capitalize()}</strong> : <span class='translated-text'>{result}</span></p></div>", 
                                     unsafe_allow_html=True)
                         else:
                             st.error("Erreur lors de la traduction ou modèle non disponible.")
@@ -874,11 +918,11 @@ def main():
                 <span class='badge'>Pandas</span>
                 <span class='badge'>Plotly</span>
                 <span class='badge'>SQL</span>
-                <h3 style='color:#4b79a1; margin-top:1.5em;'>Projets Récents</h3>
+                <h3 style='color:#4b79a1; margin-top:1.5em;'>Projets récents</h3>
                 <ul>
                     <li><b>💳 Credit Card Expenditure Predictor</b> : Application de prédiction de dépenses de carte de crédit.</li>
                     <li><b>🫀 HeartGuard AI</b> : Prédiction de risques cardiaques par IA.</li>
-                    <li><b>🔊 Multi-IA</b> : Plateforme multi-modèles pour la génération de texte, synthèse vocale et traduction.</li>
+                    <li><b>🔍 Multi-IA</b> : Plateforme multi-modèles pour la génération de texte, synthèse vocale et traduction.</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -896,6 +940,11 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
+        # API Key settings
+        st.markdown("### Configuration de la clé API Groq")
+        if st.button("Modifier la clé API Groq"):
+            show_api_key_setup()
+        
         # Tracing settings
         st.markdown("### Configuration du traçage")
         new_tracing_enabled = st.checkbox("Activer le traçage LangSmith", value=tracing_enabled)
@@ -908,7 +957,7 @@ def main():
         # Test tracing
         st.markdown("### Tester le traçage")
         test_input = st.text_input("Entrez un texte pour tester le traçage", key="test-tracing-input")
-        if st.button("Tester le traçage"):
+        if st.button("Tester"):
             result = test_tracing_function(test_input)
             st.write(result)
             st.info("Vérifiez votre projet LangSmith (multi-ia-app) pour voir la trace !")
