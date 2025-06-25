@@ -1,0 +1,10 @@
+streamlit
+transformers
+torch
+soundfile
+groq
+langsmith
+python-dotenv
+streamlit-lottie
+requests
+streamlit-option-menu
