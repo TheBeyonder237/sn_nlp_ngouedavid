@@ -58,23 +58,18 @@ def validate_api_key(groq_api_key):
         logger.error(f"Invalid Groq API key: {e}")
         return False, f"Clé API Groq invalide : {e}"
 
-# Lottie animation loader with error handling
+# Lottie animation loader
 def load_lottieurl(url: str):
-    try:
-        r = requests.get(url, timeout=5)
-        if r.status_code != 200:
-            logger.warning(f"Failed to load Lottie animation from {url}: HTTP {r.status_code}")
-            return None
-        return r.json()
-    except Exception as e:
-        logger.error(f"Error loading Lottie animation from {url}: {e}")
+    r = requests.get(url)
+    if r.status_code != 200:
         return None
+    return r.json()
 
 # Lottie animations
 main_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json")
 loading_animation = load_lottieurl("https://assets3.lottiefiles.com/packages/lf20_p8bfn5to.json")
 about_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_0yfsb3a1.json")
-chatbot_animation = load_lottieurl("https://assets.lottiefiles.com/packages/lf20_k9jcmopv.json")  # Updated URL
+chatbot_animation = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_3rw1xtmg.json")
 
 # Page configuration
 st.set_page_config(
@@ -286,7 +281,7 @@ st.markdown("""
 
 # Sidebar with navigation
 with st.sidebar:
-    st_lottie(main_animation, height=120, key="sidebar_animation") if main_animation else st.warning("Animation de la barre latérale non chargée.")
+    st_lottie(main_animation, height=120, key="sidebar_animation")
     selected = option_menu(
         menu_title="Navigation",
         options=["Accueil", "Génération de texte", "Text-to-Speech", "Traduction", "Chatbot", "À propos", "Paramètres"],
@@ -774,10 +769,7 @@ def main():
             </div>
             """, unsafe_allow_html=True)
         with col2:
-            if main_animation:
-                st_lottie(main_animation, height=220, key="main_animation")
-            else:
-                st.warning("Animation principale non chargée.")
+            st_lottie(main_animation, height=220, key="main_animation")
             st.markdown("""
             <div style='margin-top: 18px; background: linear-gradient(135deg, #475569 0%, #334155 100%); color: #e0f0ff; padding: 18px; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(71, 85, 105, 0.2);'>
                 <h2 style='margin:0; color:#7dd3fc;'>+1000</h2>
@@ -808,10 +800,7 @@ def main():
         gen_btn = st.button("✨ Générer le texte", key="modern-gen-btn")
         if gen_btn:
             with st.spinner("Génération en cours..."):
-                if loading_animation:
-                    st_lottie(loading_animation, height=80, key="loading-textgen")
-                else:
-                    st.markdown("<p style='color:#7dd3fc;'>Génération en cours...</p>", unsafe_allow_html=True)
+                st_lottie(loading_animation, height=80, key="loading-textgen")
                 texte = generate_text_with_groq(prompt, length, temperature)
             if texte:
                 st.markdown(f"""
@@ -927,10 +916,7 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
-        if chatbot_animation:
-            st_lottie(chatbot_animation, height=150, key="chatbot_animation")
-        else:
-            st.warning("Animation du chatbot non chargée.")
+        st_lottie(chatbot_animation, height=150, key="chatbot_animation")
         
         # Initialize chat history in session state
         if "chat_history" not in st.session_state:
@@ -992,10 +978,7 @@ def main():
         """, unsafe_allow_html=True)
         col1, col2 = st.columns([1, 2])
         with col1:
-            if about_animation:
-                st_lottie(about_animation, height=250, key="about_animation")
-            else:
-                st.warning("Animation À propos non chargée.")
+            st_lottie(about_animation, height=250, key="about_animation")
             st.image(
                 "https://avatars.githubusercontent.com/u/TheBeyonder237",
                 width=180,
