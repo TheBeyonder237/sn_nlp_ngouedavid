@@ -69,6 +69,7 @@ def load_lottieurl(url: str):
 main_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json")
 loading_animation = load_lottieurl("https://assets3.lottiefiles.com/packages/lf20_p8bfn5to.json")
 about_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_0yfsb3a1.json")
+chatbot_animation = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_3rw1xtmg.json")
 
 # Page configuration
 st.set_page_config(
@@ -235,6 +236,46 @@ st.markdown("""
     .stSelectbox label {
         color: #7dd3fc !important;
     }
+    .chat-container {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: rgba(30, 41, 59, 0.95);
+        border-radius: 20px;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 20px rgba(71, 85, 105, 0.2);
+    }
+    .chat-message {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 15px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+    .user-message {
+        background: linear-gradient(90deg, #475569 0%, #64748b 100%);
+        color: #e0f0ff;
+        margin-left: auto;
+        box-shadow: 0 2px 8px rgba(71, 85, 105, 0.2);
+    }
+    .bot-message {
+        background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+        color: #7dd3fc;
+        margin-right: auto;
+        box-shadow: 0 2px 8px rgba(71, 85, 105, 0.2);
+    }
+    .chat-input {
+        background: #1e293b;
+        border: 2px solid #475569;
+        border-radius: 20px;
+        padding: 0.8rem;
+        color: #e0f0ff;
+        margin-top: 1rem;
+    }
+    .chat-input:focus {
+        border-color: #7dd3fc;
+        box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.2);
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -243,8 +284,8 @@ with st.sidebar:
     st_lottie(main_animation, height=120, key="sidebar_animation")
     selected = option_menu(
         menu_title="Navigation",
-        options=["Accueil", "Génération de texte", "Text-to-Speech", "Traduction", "À propos", "Paramètres"],
-        icons=['house', 'robot', 'volume-up', 'globe', 'info-circle', 'gear'],
+        options=["Accueil", "Génération de texte", "Text-to-Speech", "Traduction", "Chatbot", "À propos", "Paramètres"],
+        icons=['house', 'robot', 'volume-up', 'globe', 'chat-dots', 'info-circle', 'gear'],
         menu_icon="cast",
         default_index=0,
         styles={
@@ -575,6 +616,28 @@ def text_to_speech(text, model, tokenizer):
         st.error(f"Erreur TTS : {e}")
         return None
 
+@traceable(run_type="chain", name="chatbot", tags=["chatbot", "groq"])
+def chatbot_response(messages, temperature=0.7):
+    try:
+        if not groq_client:
+            logger.error("Groq client not initialized")
+            st.error("Client Groq non initialisé. Veuillez vérifier la configuration.")
+            return None
+            
+        response = groq_client.chat.completions.create(
+            messages=messages,
+            model="llama-3.3-70b-versatile",
+            temperature=temperature,
+            max_tokens=500
+        )
+        result = response.choices[0].message.content
+        logger.info(f"Chatbot response generated for input: {messages[-1]['content'][:50]}...")
+        return result
+    except Exception as e:
+        logger.error(f"Chatbot error: {e}")
+        st.error(f"Erreur du chatbot : {e}")
+        return None
+
 # LangSmith Monitoring Badge
 def display_langsmith_badge(tracing_enabled):
     status = "ACTIF" if tracing_enabled else "INACTIF"
@@ -655,7 +718,7 @@ def main():
         """
         <div style="text-align: center; margin-bottom: 2rem;">
             <h1 class="title-animation" style="color: #e0f0ff; font-size: 3rem; text-shadow: 2px 2px 4px rgba(71, 85, 105, 0.3);">
-                ✨ Multi-IA : Génération · Voix · Traduction ✨
+                ✨ Multi-IA : Génération · Voix · Traduction · Chatbot ✨
             </h1>
             <p style="color: #e0f0ff; font-size: 1.2rem; opacity: 0.9;">
                 Bienvenue dans un univers intelligent où le texte prend vie ! 🧠🔍💬
@@ -675,13 +738,13 @@ def main():
                 margin-bottom: 36px;
                 box-shadow: 0 6px 32px 0 rgba(71, 85, 105, 0.2);
             '>
-                <h1 class='section-title' style='font-size:2.8em; margin-bottom:0.2em;'>✨ Multi-IA : Génération · Voix · Traduction ✨</h1>
+                <h1 class='section-title' style='font-size:2.8em; margin-bottom:0.2em;'>✨ Multi-IA : Génération · Voix · Traduction · Chatbot ✨</h1>
                 <p style='color: #e0f0ff; font-size: 1.35em; font-weight: 400; margin-bottom:0.8em;'>
-                    <i>Bienvenue dans un univers intelligent où le texte prend vie ! 🧠🔊🌍</i>
+                    <i>Bienvenue dans un univers intelligent où le texte prend vie ! 🧠🔊🌍💬</i>
                 </p>
                 <hr style='border: none; border-top: 1.5px solid #475569; width: 60%; margin: 1.5em auto 1.5em auto;'/>
                 <p style='color: #7dd3fc; font-size: 1.1em; max-width: 700px; margin: auto;'>
-                    Cette application met la puissance du machine learning et du NLP au service de la créativité et de la productivité : <b>génère, vocalise, traduis</b> en quelques clics.<br>
+                    Cette application met la puissance du machine learning et du NLP au service de la créativité et de la productivité : <b>génère, vocalise, traduis, discute</b> en quelques clics.<br>
                     <span style='color:#e0f0ff;'>Pensée pour les passionnés d'IA, accessible à tous.</span>
                 </p>
             </div>
@@ -692,7 +755,7 @@ def main():
             <div class='section-card' style='margin-bottom:1.5em;'>
                 <h3 style='color:#7dd3fc; font-size:1.3em;'>🎯 Mission</h3>
                 <p style='font-size:1.08em; color:#e0f0ff;'>
-                    Offrir une plateforme IA tout-en-un pour explorer la génération de texte, la synthèse vocale et la traduction automatique, avec une expérience utilisateur moderne et agréable.
+                    Offrir une plateforme IA tout-en-un pour explorer la génération de texte, la synthèse vocale, la traduction automatique et les interactions conversationnelles, avec une expérience utilisateur moderne et agréable.
                 </p>
             </div>
             <div class='section-card'>
@@ -842,6 +905,70 @@ def main():
                         else:
                             st.error("Erreur lors de la traduction ou modèle non disponible.")
 
+    elif selected == "Chatbot":
+        st.markdown("""
+            <div style='background: rgba(30, 41, 59, 0.75); border-radius: 38px; box-shadow: 0 12px 48px 0 rgba(71, 85, 105, 0.3), 0 2px 12px rgba(100, 116, 139, 0.3); padding: 2.8rem 2.2rem 2.2rem 2.2rem; margin-bottom: 2.5rem; position: relative; max-width: 900px; margin-left:auto; margin-right:auto;'>
+                <div style='display:flex; align-items:center; justify-content:center; margin-bottom:1.2em;'>
+                    <h1 style='font-size:2.3em; color:#7dd3fc; font-weight:800; letter-spacing:1px; margin:0;'>Chatbot IA</h1>
+                </div>
+                <span class='badge'>Groq · Conversation</span>
+                <hr class='section-sep' style='margin:1.2em 0 2em 0;'/>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st_lottie(chatbot_animation, height=150, key="chatbot_animation")
+        
+        # Initialize chat history in session state
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = [
+                {"role": "assistant", "content": "Bonjour ! Je suis votre chatbot IA, prêt à répondre à vos questions ou à discuter de tout ce que vous voulez. Comment puis-je vous aider aujourd'hui ?"}
+            ]
+        
+        # Display chat history
+        with st.container():
+            st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
+            for message in st.session_state.chat_history:
+                if message["role"] == "user":
+                    st.markdown(
+                        f"<div class='chat-message user-message'>{message['content']}</div>",
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown(
+                        f"<div class='chat-message bot-message'>{message['content']}</div>",
+                        unsafe_allow_html=True
+                    )
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Chat input
+        user_input = st.text_input("Votre message :", key="chat_input", placeholder="Posez une question ou commencez une conversation...", help="Tapez votre message et appuyez sur Entrée pour envoyer.")
+        
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            if st.button("✨ Envoyer", key="chat_send_btn"):
+                if user_input.strip():
+                    # Add user message to history
+                    st.session_state.chat_history.append({"role": "user", "content": user_input})
+                    
+                    # Generate bot response
+                    with st.spinner("Réponse en cours..."):
+                        messages = [
+                            {"role": "system", "content": "Vous êtes un assistant IA utile et amical. Répondez de manière claire et conversationnelle."},
+                            *st.session_state.chat_history
+                        ]
+                        response = chatbot_response(messages)
+                        if response:
+                            st.session_state.chat_history.append({"role": "assistant", "content": response})
+                        st.rerun()
+                else:
+                    st.warning("Veuillez entrer un message.")
+        with col2:
+            if st.button("🗑️ Effacer la conversation", key="chat_clear_btn"):
+                st.session_state.chat_history = [
+                    {"role": "assistant", "content": "Conversation réinitialisée ! Comment puis-je vous aider maintenant ?"}
+                ]
+                st.rerun()
+
     elif selected == "À propos":
         st.markdown("""
             <div style='background: linear-gradient(120deg, #475569 0%, #334155 100%); padding: 2rem; border-radius: 18px; color: #e0f0ff; margin-bottom: 2rem; text-align: center;'>
@@ -851,14 +978,13 @@ def main():
         """, unsafe_allow_html=True)
         col1, col2 = st.columns([1, 2])
         with col1:
-            st_lottie(about_animation, height=220, key="about_animation")
+            st_lottie(about_animation, height=250, key="about_animation")
             st.image(
                 "https://avatars.githubusercontent.com/u/TheBeyonder237",
                 width=180,
-                caption="Ngoue David",
+                caption="Ngôue David",
                 output_format="auto",
-                use_container_width=False,
-                channels="RGB"
+                use_container_width=False
             )
             st.markdown("""
                 <div style='text-align:center; margin-top:1em;'>
@@ -891,13 +1017,13 @@ def main():
                 <ul style='color:#e0f0ff;'>
                     <li><b>💳 Credit Card Expenditure Predictor</b> : Application de prédiction de dépenses de carte de crédit.</li>
                     <li><b>🫀 HeartGuard AI</b> : Prédiction de risques cardiaques par IA.</li>
-                    <li><b>🔍 Multi-IA</b> : Plateforme multi-modèles pour la génération de texte, synthèse vocale et traduction.</li>
+                    <li><b>🔍 Multi-IA</b> : Plateforme multi-modèles pour la génération de texte, synthèse vocale, traduction et chatbot.</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
         st.markdown("""
             <div style='text-align: center; color: #e0f0ff; padding: 20px;'>
-            Développé avec ❤️ par Ngoue David
+            Développé avec ❤️ par Ngôue David
             </div>
         """, unsafe_allow_html=True)
 
