@@ -1,13 +1,11 @@
 import streamlit as st
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM, VitsModel
+from transformers import pipeline, AutoTokenizer, VitsModel
 import torch
 import tempfile
 import soundfile as sf
-import time
 from groq import Groq
 from langsmith import Client
 from langsmith.run_helpers import traceable
-from langsmith.run_trees import RunTree
 import os
 from dotenv import load_dotenv
 import json
@@ -19,36 +17,34 @@ from streamlit_option_menu import option_menu
 import logging
 import uuid
 
-# Configure logging for LangSmith debugging
+# Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("langsmith")
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
 # ========== LangSmith Configuration ==========
 def configure_langsmith(tracing_enabled=True, langsmith_api_key=None):
-    """Configure LangSmith environment variables."""
     os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
-    os.environ["LANGSMITH_API_KEY"] = langsmith_api_key or os.getenv("LANGSMITH_API_KEY", "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")
+    os.environ["LANGSMITH_API_KEY"] = langsmith_api_key or os.getenv("LANGSMITH_API_KEY", "lsv2_pt_10d19835f923417a877")
     os.environ["LANGSMITH_PROJECT"] = "multi-ia-app"
     os.environ["LANGSMITH_TRACING"] = "true" if tracing_enabled else "false"
     logger.info(f"LangSmith tracing {'enabled' if tracing_enabled else 'disabled'}")
 
-# Initialize LangSmith client with error handling
+# Initialize LangSmith client
 def initialize_langsmith_client():
     try:
         client = Client()
         logger.info("LangSmith client initialized successfully")
         return client
     except Exception as e:
-        logger.error(f"Failed to initialize LangSmith client: {str(e)}")
-        st.error(f"Erreur lors de l'initialisation de LangSmith : {str(e)}")
+        logger.error(f"Failed to initialize LangSmith client: {e}")
+        st.error(f"Erreur lors de l'initialisation de LangSmith : {e}")
         return None
 
-# Validate API key (only Groq)
+# Validate Groq API key
 def validate_api_key(groq_api_key):
-    """Validate Groq API key by attempting to initialize client."""
     try:
         groq_client = Groq(api_key=groq_api_key)
         groq_client.chat.completions.create(
@@ -59,22 +55,22 @@ def validate_api_key(groq_api_key):
         logger.info("Groq API key validated successfully")
         return True, "Clé API Groq valide"
     except Exception as e:
-        logger.error(f"Invalid Groq API key: {str(e)}")
-        return False, f"Clé API Groq invalide : {str(e)}"
+        logger.error(f"Invalid Groq API key: {e}")
+        return False, f"Clé API Groq invalide : {e}"
 
-# --------- UTILS for Lottie ---------
+# Lottie animation loader
 def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
-# --------- LOTTIE ANIMATIONS ---------
+# Lottie animations
 main_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json")
 loading_animation = load_lottieurl("https://assets3.lottiefiles.com/packages/lf20_p8bfn5to.json")
 about_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_0yfsb3a1.json")
 
-# ---------- PAGE CONFIG ----------
+# Page configuration
 st.set_page_config(
     page_title="Multi-IA 🌐✨",
     layout="wide",
@@ -82,7 +78,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ---------- MODERN CSS (Darker Palette) ----------
+# Modern CSS (Darker Palette)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
@@ -242,7 +238,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ---------- SIDEBAR (Lottie + Option Menu) ----------
+# Sidebar with navigation
 with st.sidebar:
     st_lottie(main_animation, height=120, key="sidebar_animation")
     selected = option_menu(
@@ -278,7 +274,7 @@ with st.sidebar:
         }
     )
 
-# ---------- API Key Management ----------
+# API Key Management
 def save_api_key(groq_api_key, langsmith_api_key, tracing_enabled=True):
     config_dir = Path(".config")
     config_dir.mkdir(exist_ok=True)
@@ -298,10 +294,10 @@ def load_api_key():
     if config_file.exists():
         with open(config_file, "r") as f:
             config = json.load(f)
-            return config.get("groq_api_key"), config.get("langsmith_api_key", "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"), config.get("tracing_enabled", True)
-    return None, "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", True
+            return config.get("groq_api_key"), config.get("langsmith_api_key", "lsv2_pt_10d19835f923417a877"), config.get("tracing_enabled", True)
+    return None, "lsv2_pt_10d19835f923417a877", True
 
-# ---------- API Key Setup Interface ----------
+# API Key Setup Interface
 def show_api_key_setup():
     st.markdown("""
     <style>
@@ -404,7 +400,7 @@ def show_api_key_setup():
     langsmith_api_key = st.text_input(
         "Clé API LangSmith",
         type="password",
-        value="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",
+        value="lsv2_pt_10d19835f923417a877",
         help="Clé API LangSmith pour le monitoring. La clé par défaut est préremplie."
     )
 
@@ -442,7 +438,7 @@ def show_api_key_setup():
         </div>
         """, unsafe_allow_html=True)
 
-# ---------- Model Loading with Caching ----------
+# Model Loading with Caching
 @st.cache_resource
 def load_tts_model(language_code="eng"):
     try:
@@ -451,17 +447,28 @@ def load_tts_model(language_code="eng"):
         logger.info(f"TTS model loaded for language: {language_code}")
         return model, tokenizer
     except Exception as e:
-        logger.error(f"Failed to load TTS model: {str(e)}")
+        logger.error(f"Failed to load TTS model: {e}")
         return None, None
+
+@st.cache_resource
+def load_translation_pipeline():
+    try:
+        translator = pipeline("text2text-generation", model="google/flan-t5-large")
+        logger.info("Translation pipeline (Flan-T5) loaded successfully")
+        return translator
+    except Exception as e:
+        logger.error(f"Failed to load translation pipeline: {e}")
+        return None
 
 @st.cache_resource
 def load_models():
     gen = pipeline("text-generation", model="gpt2")
     tts_model, tts_tokenizer = load_tts_model()
-    logger.info("Text generation and TTS models loaded")
-    return gen, tts_model, tts_tokenizer
+    translator = load_translation_pipeline()
+    logger.info("Text generation, TTS, and translation models loaded")
+    return gen, tts_model, tts_tokenizer, translator
 
-text_gen, tts_model, tts_tokenizer = load_models()
+text_gen, tts_model, tts_tokenizer, translator = load_models()
 
 # Initialize global clients
 groq_client = None
@@ -475,18 +482,17 @@ def initialize_clients(groq_api_key, langsmith_api_key):
         logger.info("Groq and LangSmith clients initialized")
         return True
     except Exception as e:
-        logger.error(f"Failed to initialize clients: {str(e)}")
-        st.error(f"Erreur lors de l'initialisation des clients : {str(e)}")
+        logger.error(f"Failed to initialize clients: {e}")
+        st.error(f"Erreur lors de l'initialisation des clients : {e}")
         return False
 
-# ---------- Test Tracing Function ----------
+# Test Tracing Function
 @traceable(run_type="chain", name="test_tracing", tags=["test"])
 def test_tracing_function(input_text):
-    """Test function to verify LangSmith tracing."""
     logger.info(f"Testing tracing with input: {input_text}")
     return f"Traçage testé : {input_text}"
 
-# ---------- Enhanced Functions ----------
+# Enhanced Functions
 @traceable(run_type="chain", name="groq_text_generation", tags=["text-generation", "groq"])
 def generate_text_with_groq(prompt, length, temperature=1.0):
     try:
@@ -505,45 +511,40 @@ def generate_text_with_groq(prompt, length, temperature=1.0):
         logger.info(f"Text generation completed for prompt: {prompt[:50]}...")
         return result
     except Exception as e:
-        logger.error(f"Groq error: {str(e)}")
-        st.error(f"Erreur Groq : {str(e)}")
+        logger.error(f"Groq error: {e}")
+        st.error(f"Erreur Groq : {e}")
         return None
 
-SUPPORTED_LANGUAGE_PAIRS = {
-    ("en", "fr"), ("fr", "en"), ("en", "es"), ("es", "en"),
-    ("de", "en"), ("en", "de"), ("it", "en"), ("en", "it"),
-    ("nl", "en"), ("en", "nl"), ("pt", "en"), ("en", "pt")
-}
-
-@traceable(run_type="chain", name="translation", tags=["translation", "helsinki-nlp"])
+@traceable(run_type="chain", name="translation", tags=["translation", "flan-t5"])
 def translate(text, src_lang, tgt_lang):
-    global langsmith_client
+    global langsmith_client, translator
     if not langsmith_client:
         logger.error("LangSmith client not initialized")
         st.error("Le client LangSmith n'est pas initialisé. Veuillez configurer vos clés API.")
         return None
     
-    if (src_lang, tgt_lang) not in SUPPORTED_LANGUAGE_PAIRS:
-        logger.error(f"Unsupported language pair: {src_lang} -> {tgt_lang}")
-        st.error(f"La paire de langues {src_lang} -> {tgt_lang} n'est pas supportée.")
-        return None
-    
-    try:
-        import sentencepiece
-    except ImportError:
-        logger.error("sentencepiece is not installed")
-        st.error("La bibliothèque 'sentencepiece' est requise pour la traduction. Installez-la avec `pip install sentencepiece`.")
+    if not translator:
+        logger.error("Translation pipeline not initialized")
+        st.error("Pipeline de traduction non chargé correctement.")
         return None
 
     try:
-        model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
-        translator = pipeline("translation", model=model_name)
-        result = translator(text)[0]["translation_text"]
+        lang_map = {
+            "de": "German",
+            "es": "Spanish",
+            "fr": "French",
+            "en": "English",
+            "it": "Italian",
+            "nl": "Dutch",
+            "pt": "Portuguese"
+        }
+        prompt = f"Translate the following text from {lang_map[src_lang]} to {lang_map[tgt_lang]}: {text}"
+        result = translator(prompt, max_length=512)[0]['generated_text']
         logger.info(f"Translation completed: {src_lang} -> {tgt_lang}")
         return result
     except Exception as e:
-        logger.error(f"Translation error: {str(e)}")
-        st.error(f"Erreur de traduction : {str(e)}. Vérifiez que le modèle {model_name} est disponible.")
+        logger.error(f"Translation error: {e}")
+        st.error(f"Erreur de traduction : {e}")
         return None
 
 @traceable(run_type="chain", name="text_to_speech", tags=["tts", "mms-tts"])
@@ -570,11 +571,11 @@ def text_to_speech(text, model, tokenizer):
             logger.info("Text-to-speech generation completed")
             return audio_file.read()
     except Exception as e:
-        logger.error(f"TTS error: {str(e)}")
-        st.error(f"Erreur TTS : {str(e)}")
+        logger.error(f"TTS error: {e}")
+        st.error(f"Erreur TTS : {e}")
         return None
 
-# ========== Modern LangSmith Monitoring Badge ==========
+# LangSmith Monitoring Badge
 def display_langsmith_badge(tracing_enabled):
     status = "ACTIF" if tracing_enabled else "INACTIF"
     color = "#00b894" if tracing_enabled else "#dc2626"
@@ -621,7 +622,7 @@ def display_langsmith_badge(tracing_enabled):
         ''', unsafe_allow_html=True
     )
 
-# ---------- Main Application ----------
+# Main Application
 def main():
     global groq_client, langsmith_client
     
@@ -698,7 +699,7 @@ def main():
                 <h3 style='color:#7dd3fc; font-size:1.2em;'>🔬 Technologies</h3>
                 <span class='badge'>Groq</span>
                 <span class='badge'>Meta MMS-TTS</span>
-                <span class='badge'>Helsinki-NLP</span>
+                <span class='badge'>Flan-T5</span>
                 <span class='badge'>LangSmith</span>
                 <span class='badge'>Streamlit</span>
                 <span class='badge'>Python</span>
@@ -717,7 +718,6 @@ def main():
         st.markdown("""
             <div style='background: rgba(30, 41, 59, 0.75); border-radius: 38px; box-shadow: 0 12px 48px 0 rgba(71, 85, 105, 0.3), 0 2px 12px rgba(100, 116, 139, 0.3); padding: 2.8rem 2.2rem 2.2rem 2.2rem; margin-bottom: 2.5rem; position: relative; max-width: 900px; margin-left:auto; margin-right:auto;'>
                 <div style='display:flex; align-items:center; justify-content:center; margin-bottom:1.2em;'>
-                    <img src="https://lottie.host/6e7e2e7b-6e7e-4e7e-8e7e-6e7e2e7b6e7e/ai.json" alt="AI" style="height:48px; margin-right:16px;"/>
                     <h1 style='font-size:2.3em; color:#7dd3fc; font-weight:800; letter-spacing:1px; margin:0;'>Générateur de texte IA</h1>
                 </div>
                 <span class='badge'>Groq · Génération</span>
@@ -827,8 +827,6 @@ def main():
             
             if langues[src] == langues[tgt]:
                 st.error("La langue source et la langue cible doivent être différentes.")
-            elif (langues[src], langues[tgt]) not in SUPPORTED_LANGUAGE_PAIRS:
-                st.warning(f"La paire de langues {src} -> {tgt} n'est pas supportée.")
             else:
                 texte_input = st.text_area("Texte à traduire :", 
                                         placeholder="Exemple : Wie schön ist das Wetter heute ?")
