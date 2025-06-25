@@ -498,7 +498,14 @@ def translate(text, src_lang, tgt_lang):
         logger.error("LangSmith client not initialized")
         st.error("Le client LangSmith n'est pas initialisé. Veuillez configurer vos clés API.")
         return None
-        
+    
+    try:
+        import sentencepiece  # Vérifier si sentencepiece est installé
+    except ImportError:
+        logger.error("sentencepiece is not installed")
+        st.error("La bibliothèque 'sentencepiece' est requise pour la traduction. Installez-la avec `pip install sentencepiece`.")
+        return None
+
     try:
         model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
         translator = pipeline("translation", model=model_name)
@@ -507,7 +514,7 @@ def translate(text, src_lang, tgt_lang):
         return result
     except Exception as e:
         logger.error(f"Translation error: {str(e)}")
-        st.error(f"Erreur de traduction: {str(e)}")
+        st.error(f"Erreur de traduction : {str(e)}. Vérifiez que le modèle {model_name} est disponible.")
         return None
 
 @traceable(run_type="chain", name="text_to_speech", tags=["tts", "mms-tts"])
@@ -798,18 +805,20 @@ def main():
             
             if langues[src] == langues[tgt]:
                 st.warning("La langue source et la langue cible doivent être différentes.")
+            elif (langues[src], langues[tgt]) not in SUPPORTED_LANGUAGE_PAIRS:
+                st.warning(f"La paire de langues {src} -> {tgt} n'est pas supportée.")
             else:
                 texte_input = st.text_area("Texte à traduire :", 
-                                         placeholder="Ex : Wie schön ist das Wetter heute?")
+                                        placeholder="Ex : Wie schön ist das Wetter heute?")
                 
                 if st.button("📤 Traduire"):
                     with st.spinner("Traduction en cours..."):
                         result = translate(texte_input, langues[src], langues[tgt])
                         if result:
                             st.markdown(f"<div class='block'><p><strong>{src.capitalize()} :</strong> {texte_input}</p></div>", 
-                                      unsafe_allow_html=True)
+                                    unsafe_allow_html=True)
                             st.markdown(f"<div class='block'><p><strong>{tgt.capitalize()} :</strong> <span class='translated-text'>{result}</span></p></div>", 
-                                      unsafe_allow_html=True)
+                                    unsafe_allow_html=True)
                         else:
                             st.error("Erreur lors de la traduction ou modèle non disponible.")
 
