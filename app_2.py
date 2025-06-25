@@ -69,7 +69,7 @@ def load_lottieurl(url: str):
 main_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json")
 loading_animation = load_lottieurl("https://assets3.lottiefiles.com/packages/lf20_p8bfn5to.json")
 about_animation = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_0yfsb3a1.json")
-chatbot_animation = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_3rw1xtmg.json")
+chatbot_animation = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_0yfsb3a1.json")
 
 # Page configuration
 st.set_page_config(
