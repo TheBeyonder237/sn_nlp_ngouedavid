@@ -490,6 +490,13 @@ def generate_text_with_groq(prompt, length, temperature=1.0):
         logger.error(f"Groq error: {str(e)}")
         st.error(f"Erreur Groq: {str(e)}")
         return None
+    
+# Liste des paires de langues supportées (exemple partiel, à compléter selon vos besoins)
+SUPPORTED_LANGUAGE_PAIRS = {
+    ("en", "fr"), ("fr", "en"), ("en", "es"), ("es", "en"),
+    ("de", "en"), ("en", "de"), ("it", "en"), ("en", "it"),
+    ("nl", "en"), ("en", "nl"), ("pt", "en"), ("en", "pt")
+}
 
 @traceable(run_type="chain", name="translation", tags=["translation", "helsinki-nlp"])
 def translate(text, src_lang, tgt_lang):
